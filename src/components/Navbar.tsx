@@ -158,7 +158,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <p className="text-xs font-semibold text-[#343746] dark:text-gray-200 leading-tight group-hover:text-[#3978AE] transition-colors">
                       {userName}
                     </p>
-                    <p className="text-[10px] text-gray-400">Tài khoản Google</p>
+                    <p className="text-[10px] text-gray-400">Tài khoản Nutrivita</p>
                   </div>
                 </button>
 

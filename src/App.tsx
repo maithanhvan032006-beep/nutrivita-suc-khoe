@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
 import {
+  AppUser,
   subscribeToAuthChanges,
-  loginWithGoogle,
+  registerWithEmail,
+  loginWithEmail,
+  startGuestSession,
   logoutUser,
 } from './services/authService';
 import {
@@ -66,7 +68,7 @@ import { ProfileSettingsView } from './components/ProfileSettingsView';
 
 export default function App() {
   // Auth state
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -87,7 +89,7 @@ export default function App() {
     return localStorage.getItem('nutrivita_theme') === 'dark';
   });
 
-  // Synchronized Firestore Data
+  // Synchronized Data
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
   const [waterTotalMl, setWaterTotalMl] = useState<number>(0);
@@ -109,7 +111,7 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Listen to Firebase Auth state
+  // Listen to Auth state
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges(async (user) => {
       setCurrentUser(user);
@@ -118,10 +120,9 @@ export default function App() {
       if (user) {
         setProfileLoading(true);
         try {
-          // Fetch user profile from Firestore
+          // Fetch or initialize user profile
           let profile = await getUserProfile(user.uid);
           if (!profile) {
-            // First time login: create initial profile doc
             profile = {
               displayName: user.displayName || 'Người dùng mới',
               email: user.email || '',
@@ -163,7 +164,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Listen to Firestore real-time collections for the selected date
+  // Listen to collections for the selected date
   useEffect(() => {
     if (!currentUser) return;
 
@@ -211,19 +212,38 @@ export default function App() {
   }, [currentUser, selectedDate]);
 
   // Auth actions
-  const handleGoogleLogin = async () => {
+  const handleRegisterWithEmail = async (name: string, email: string, pass: string) => {
     setAuthError(null);
     try {
-      await loginWithGoogle();
+      const user = await registerWithEmail(name, email, pass);
+      setCurrentUser(user);
     } catch (err: any) {
-      setAuthError(err.message || 'Đăng nhập không thành công.');
+      setAuthError(err?.message || 'Đăng ký không thành công.');
       throw err;
     }
+  };
+
+  const handleLoginWithEmail = async (email: string, pass: string) => {
+    setAuthError(null);
+    try {
+      const user = await loginWithEmail(email, pass);
+      setCurrentUser(user);
+    } catch (err: any) {
+      setAuthError(err?.message || 'Đăng nhập không thành công.');
+      throw err;
+    }
+  };
+
+  const handleContinueAsGuest = (name?: string) => {
+    setAuthError(null);
+    const guestUser = startGuestSession(name);
+    setCurrentUser(guestUser);
   };
 
   const handleLogout = async () => {
     try {
       await logoutUser();
+      setCurrentUser(null);
       setCurrentTab('dashboard');
     } catch (err: any) {
       console.error('Logout error:', err);
@@ -295,7 +315,6 @@ export default function App() {
     const updated = [{ ...log, id }, ...weightLogs];
     setWeightLogs(updated);
 
-    // Also update currentWeightKg in private profile
     if (privateProfile) {
       await savePrivateProfile(currentUser.uid, {
         currentWeightKg: log.weightKg,
@@ -332,6 +351,7 @@ export default function App() {
     if (!currentUser) return;
     await deleteUserAccountAndData(currentUser.uid);
     await logoutUser();
+    setCurrentUser(null);
   };
 
   const handleExportData = async () => {
@@ -351,11 +371,13 @@ export default function App() {
     );
   }
 
-  // Not signed in: Show Landing Page
+  // Not signed in / No active session: Show Landing Page
   if (!currentUser) {
     return (
       <LandingPage
-        onLoginWithGoogle={handleGoogleLogin}
+        onRegisterWithEmail={handleRegisterWithEmail}
+        onLoginWithEmail={handleLoginWithEmail}
+        onContinueAsGuest={handleContinueAsGuest}
         authLoading={authLoading}
         authError={authError}
       />
@@ -370,7 +392,7 @@ export default function App() {
         onTabChange={setCurrentTab}
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
-        userName={currentUser.displayName || userProfile?.displayName || 'Tài khoản Google'}
+        userName={currentUser.displayName || userProfile?.displayName || 'Người dùng'}
         userPhoto={currentUser.photoURL || userProfile?.photoURL}
         onLogout={handleLogout}
         isDarkMode={isDarkMode}

@@ -189,9 +189,9 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
               <h3 className="font-extrabold text-base text-[#343746] dark:text-white">
                 {userProfile?.displayName || 'Người dùng Nutrivita'}
               </h3>
-              <p className="text-xs text-gray-400">{userProfile?.email}</p>
-              <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md font-semibold mt-1 inline-block">
-                Tài khoản Google đã xác minh
+              <p className="text-xs text-gray-400">{userProfile?.email || 'Chế độ trải nghiệm cá nhân'}</p>
+              <span className="text-[10px] text-[#3978AE] bg-[#FCE8EF] dark:bg-gray-800 px-2 py-0.5 rounded-md font-semibold mt-1 inline-block">
+                {userProfile?.email ? 'Tài khoản Nutrivita đã lưu' : 'Đang sử dụng trực tiếp (Đăng nhập sau)'}
               </span>
             </div>
           </div>

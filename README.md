@@ -6,10 +6,10 @@
 
 ## 🌟 Điểm nổi bật & Tính năng chính
 
-1. **Xác thực Google OAuth qua Firebase Authentication thật**:
-   - Đăng nhập bảo mật một chạm với Google Sign-In.
-   - Hoàn toàn không tạo người dùng ảo hay mock data.
-   - Phiên đăng nhập được duy trì và khôi phục khi tải lại trang.
+1. **Tự đăng ký & Đăng nhập linh hoạt (Hỗ trợ trải nghiệm ngay - Đăng nhập sau)**:
+   - Tự tạo tài khoản với Họ tên, Email và Mật khẩu riêng.
+   - Nút **"Trải nghiệm ngay (Đăng nhập sau)"** cho phép người dùng vào thẳng ứng dụng và Onboarding ngay lập tức mà không bị chặn bởi bất kỳ bước đăng nhập nào.
+   - Dữ liệu duy trì liên tục và có thể đồng bộ lưu trữ an toàn.
 
 2. **Quy trình Onboarding 5 bước**:
    - Thu thập thông số cơ thể: ngày sinh, chiều cao, cân nặng hiện tại, cân nặng mục tiêu, giới tính sinh học.

@@ -11,9 +11,15 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { handleFirestoreError, OperationType } from './firestoreError';
+import { isGuestUser, getGuestData, setGuestData } from './localGuestStore';
 import { FoodLog, MealType } from '../types';
 
 export async function getFoodLogsByDate(userId: string, date: string): Promise<FoodLog[]> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<FoodLog[]>(userId, 'foodLogs', []);
+    return all.filter((item) => item.date === date);
+  }
+
   const path = `users/${userId}/foodLogs`;
   try {
     const q = query(
@@ -36,6 +42,22 @@ export function subscribeFoodLogsByDate(
   onUpdate: (logs: FoodLog[]) => void,
   onError?: (err: any) => void
 ) {
+  if (isGuestUser(userId)) {
+    const fetchLocal = () => {
+      const all = getGuestData<FoodLog[]>(userId, 'foodLogs', []);
+      onUpdate(all.filter((item) => item.date === date));
+    };
+    fetchLocal();
+
+    const handler = (e: StorageEvent) => {
+      if (e.key && e.key.includes(`nutrivita_${userId}_foodLogs`)) {
+        fetchLocal();
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }
+
   const path = `users/${userId}/foodLogs`;
   const q = query(
     collection(db, 'users', userId, 'foodLogs'),
@@ -59,9 +81,24 @@ export function subscribeFoodLogsByDate(
 }
 
 export async function addFoodLog(userId: string, item: Omit<FoodLog, 'id'>): Promise<string> {
+  const now = new Date().toISOString();
+
+  if (isGuestUser(userId)) {
+    const all = getGuestData<FoodLog[]>(userId, 'foodLogs', []);
+    const newId = 'food_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+    const newLog: FoodLog = {
+      ...item,
+      id: newId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setGuestData(userId, 'foodLogs', [newLog, ...all]);
+    window.dispatchEvent(new Event('storage'));
+    return newId;
+  }
+
   const path = `users/${userId}/foodLogs`;
   try {
-    const now = new Date().toISOString();
     const docRef = await addDoc(collection(db, 'users', userId, 'foodLogs'), {
       ...item,
       createdAt: now,
@@ -78,6 +115,16 @@ export async function updateFoodLog(
   logId: string,
   item: Partial<FoodLog>
 ): Promise<void> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<FoodLog[]>(userId, 'foodLogs', []);
+    const updated = all.map((log) =>
+      log.id === logId ? { ...log, ...item, updatedAt: new Date().toISOString() } : log
+    );
+    setGuestData(userId, 'foodLogs', updated);
+    window.dispatchEvent(new Event('storage'));
+    return;
+  }
+
   const path = `users/${userId}/foodLogs/${logId}`;
   try {
     const docRef = doc(db, 'users', userId, 'foodLogs', logId);
@@ -91,6 +138,13 @@ export async function updateFoodLog(
 }
 
 export async function deleteFoodLog(userId: string, logId: string): Promise<void> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<FoodLog[]>(userId, 'foodLogs', []);
+    setGuestData(userId, 'foodLogs', all.filter((l) => l.id !== logId));
+    window.dispatchEvent(new Event('storage'));
+    return;
+  }
+
   const path = `users/${userId}/foodLogs/${logId}`;
   try {
     await deleteDoc(doc(db, 'users', userId, 'foodLogs', logId));
@@ -105,27 +159,19 @@ export async function copyMealsToAnotherDay(
   targetDate: string,
   filterMealType?: MealType
 ): Promise<number> {
-  const path = `users/${userId}/foodLogs`;
-  try {
-    const currentLogs = await getFoodLogsByDate(userId, sourceDate);
-    const toCopy = filterMealType
-      ? currentLogs.filter(l => l.mealType === filterMealType)
-      : currentLogs;
+  const currentLogs = await getFoodLogsByDate(userId, sourceDate);
+  const toCopy = filterMealType
+    ? currentLogs.filter(l => l.mealType === filterMealType)
+    : currentLogs;
 
-    let count = 0;
-    const now = new Date().toISOString();
-    for (const log of toCopy) {
-      const { id, ...rest } = log;
-      await addDoc(collection(db, 'users', userId, 'foodLogs'), {
-        ...rest,
-        date: targetDate,
-        createdAt: now,
-        updatedAt: now,
-      });
-      count++;
-    }
-    return count;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, path);
+  let count = 0;
+  for (const log of toCopy) {
+    const { id, ...rest } = log;
+    await addFoodLog(userId, {
+      ...rest,
+      date: targetDate,
+    });
+    count++;
   }
+  return count;
 }

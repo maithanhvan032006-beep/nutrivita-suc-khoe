@@ -10,9 +10,15 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { handleFirestoreError, OperationType } from './firestoreError';
+import { isGuestUser, getGuestData, setGuestData } from './localGuestStore';
 import { DailyMealPlan, Goal, WeightLog } from '../types';
 
 export async function getWeightLogs(userId: string): Promise<WeightLog[]> {
+  if (isGuestUser(userId)) {
+    const logs = getGuestData<WeightLog[]>(userId, 'weightLogs', []);
+    return logs.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
   const path = `users/${userId}/weightLogs`;
   try {
     const q = query(
@@ -33,11 +39,25 @@ export async function addWeightLog(
   userId: string,
   log: Omit<WeightLog, 'id'>
 ): Promise<string> {
+  const now = new Date().toISOString();
+
+  if (isGuestUser(userId)) {
+    const all = getGuestData<WeightLog[]>(userId, 'weightLogs', []);
+    const newId = 'weight_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+    const newLog: WeightLog = {
+      ...log,
+      id: newId,
+      createdAt: now,
+    };
+    setGuestData(userId, 'weightLogs', [newLog, ...all]);
+    return newId;
+  }
+
   const path = `users/${userId}/weightLogs`;
   try {
     const docRef = await addDoc(collection(db, 'users', userId, 'weightLogs'), {
       ...log,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     });
     return docRef.id;
   } catch (error) {
@@ -46,6 +66,12 @@ export async function addWeightLog(
 }
 
 export async function deleteWeightLog(userId: string, logId: string): Promise<void> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<WeightLog[]>(userId, 'weightLogs', []);
+    setGuestData(userId, 'weightLogs', all.filter((l) => l.id !== logId));
+    return;
+  }
+
   const path = `users/${userId}/weightLogs/${logId}`;
   try {
     await deleteDoc(doc(db, 'users', userId, 'weightLogs', logId));
@@ -56,6 +82,10 @@ export async function deleteWeightLog(userId: string, logId: string): Promise<vo
 
 // Goals
 export async function getGoals(userId: string): Promise<Goal[]> {
+  if (isGuestUser(userId)) {
+    return getGuestData<Goal[]>(userId, 'goals', []);
+  }
+
   const path = `users/${userId}/goals`;
   try {
     const snap = await getDocs(collection(db, 'users', userId, 'goals'));
@@ -69,11 +99,21 @@ export async function getGoals(userId: string): Promise<Goal[]> {
 }
 
 export async function addGoal(userId: string, goal: Omit<Goal, 'id'>): Promise<string> {
+  const now = new Date().toISOString();
+
+  if (isGuestUser(userId)) {
+    const all = getGuestData<Goal[]>(userId, 'goals', []);
+    const newId = 'goal_' + Date.now().toString(36);
+    const newGoal: Goal = { ...goal, id: newId, createdAt: now };
+    setGuestData(userId, 'goals', [newGoal, ...all]);
+    return newId;
+  }
+
   const path = `users/${userId}/goals`;
   try {
     const docRef = await addDoc(collection(db, 'users', userId, 'goals'), {
       ...goal,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     });
     return docRef.id;
   } catch (error) {
@@ -86,6 +126,12 @@ export async function updateGoal(
   goalId: string,
   goal: Partial<Goal>
 ): Promise<void> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<Goal[]>(userId, 'goals', []);
+    setGuestData(userId, 'goals', all.map((g) => (g.id === goalId ? { ...g, ...goal } : g)));
+    return;
+  }
+
   const path = `users/${userId}/goals/${goalId}`;
   try {
     await updateDoc(doc(db, 'users', userId, 'goals', goalId), goal);
@@ -96,6 +142,10 @@ export async function updateGoal(
 
 // Meal Plans
 export async function getMealPlans(userId: string): Promise<DailyMealPlan[]> {
+  if (isGuestUser(userId)) {
+    return getGuestData<DailyMealPlan[]>(userId, 'mealPlans', []);
+  }
+
   const path = `users/${userId}/mealPlans`;
   try {
     const snap = await getDocs(collection(db, 'users', userId, 'mealPlans'));
@@ -112,11 +162,21 @@ export async function saveMealPlan(
   userId: string,
   plan: Omit<DailyMealPlan, 'id'>
 ): Promise<string> {
+  const now = new Date().toISOString();
+
+  if (isGuestUser(userId)) {
+    const all = getGuestData<DailyMealPlan[]>(userId, 'mealPlans', []);
+    const newId = 'mplan_' + Date.now().toString(36);
+    const newPlan: DailyMealPlan = { ...plan, id: newId, createdAt: now };
+    setGuestData(userId, 'mealPlans', [newPlan, ...all]);
+    return newId;
+  }
+
   const path = `users/${userId}/mealPlans`;
   try {
     const docRef = await addDoc(collection(db, 'users', userId, 'mealPlans'), {
       ...plan,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     });
     return docRef.id;
   } catch (error) {
@@ -125,6 +185,12 @@ export async function saveMealPlan(
 }
 
 export async function deleteMealPlan(userId: string, planId: string): Promise<void> {
+  if (isGuestUser(userId)) {
+    const all = getGuestData<DailyMealPlan[]>(userId, 'mealPlans', []);
+    setGuestData(userId, 'mealPlans', all.filter((p) => p.id !== planId));
+    return;
+  }
+
   const path = `users/${userId}/mealPlans/${planId}`;
   try {
     await deleteDoc(doc(db, 'users', userId, 'mealPlans', planId));
