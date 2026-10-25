@@ -1,0 +1,185 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public user profile document",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 150 },
+        "photoURL": { "type": "string", "maxLength": 1000 },
+        "profileCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "profileCompleted"]
+    },
+    "PrivateProfile": {
+      "title": "PrivateProfile",
+      "description": "Sensitive user health metrics and calculation params",
+      "type": "object",
+      "properties": {
+        "birthDate": { "type": "string", "maxLength": 20 },
+        "sexForCalculation": { "type": "string", "enum": ["male", "female", "other"] },
+        "heightCm": { "type": "number" },
+        "currentWeightKg": { "type": "number" },
+        "targetWeightKg": { "type": "number" },
+        "activityLevel": { "type": "string", "enum": ["sedentary", "light", "moderate", "heavy", "very_heavy"] },
+        "goalType": { "type": "string", "enum": ["lose_weight", "maintain", "gain_weight", "endurance", "muscle_gain"] },
+        "dietaryPreferences": { "type": "array" },
+        "allergies": { "type": "array" },
+        "healthRestrictions": { "type": "array" },
+        "dailyCalorieTarget": { "type": "number" },
+        "dailyWaterTargetMl": { "type": "number" },
+        "bmr": { "type": "number" },
+        "tdee": { "type": "number" },
+        "aiConsent": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["heightCm", "currentWeightKg", "targetWeightKg", "activityLevel", "goalType"]
+    },
+    "FoodLog": {
+      "title": "FoodLog",
+      "description": "Individual meal or food item logged by user",
+      "type": "object",
+      "properties": {
+        "foodName": { "type": "string", "maxLength": 120 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "mealType": { "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"] },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string", "maxLength": 30 },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fat": { "type": "number" },
+        "fiber": { "type": "number" },
+        "source": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["foodName", "date", "mealType", "quantity", "calories"]
+    },
+    "WaterLog": {
+      "title": "WaterLog",
+      "description": "Water intake logging entry",
+      "type": "object",
+      "properties": {
+        "amountMl": { "type": "number" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["amountMl", "date"]
+    },
+    "WorkoutLog": {
+      "title": "WorkoutLog",
+      "description": "Exercise and fitness activity log",
+      "type": "object",
+      "properties": {
+        "workoutType": { "type": "string", "maxLength": 50 },
+        "exerciseName": { "type": "string", "maxLength": 100 },
+        "durationMinutes": { "type": "number" },
+        "intensity": { "type": "string", "enum": ["light", "moderate", "high"] },
+        "estimatedCaloriesBurned": { "type": "number" },
+        "feelingAfter": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["exerciseName", "durationMinutes", "estimatedCaloriesBurned", "date"]
+    },
+    "WeightLog": {
+      "title": "WeightLog",
+      "description": "Weight and body measurements progress entry",
+      "type": "object",
+      "properties": {
+        "weightKg": { "type": "number" },
+        "bodyFatPercent": { "type": "number" },
+        "waistCm": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 300 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["weightKg", "date"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "User fitness or nutrition goal",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 100 },
+        "targetValue": { "type": "number" },
+        "currentValue": { "type": "number" },
+        "unit": { "type": "string", "maxLength": 20 },
+        "startDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "targetDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "status": { "type": "string", "enum": ["active", "completed", "paused"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "targetValue", "status"]
+    },
+    "WorkoutPlan": {
+      "title": "WorkoutPlan",
+      "description": "Weekly workout routine or personalized plan",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "days": { "type": "array" },
+        "durationMinutes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "days"]
+    },
+    "MealPlan": {
+      "title": "MealPlan",
+      "description": "AI-generated or custom weekly meal plan",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "meals": { "type": "array" },
+        "totalCalories": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "meals"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Basic user identity and profile metadata"
+    },
+    "/users/{userId}/private/profile": {
+      "schema": "PrivateProfile",
+      "description": "Confidential health metrics and targets for user"
+    },
+    "/users/{userId}/foodLogs/{logId}": {
+      "schema": "FoodLog",
+      "description": "User logged food intake items"
+    },
+    "/users/{userId}/waterLogs/{logId}": {
+      "schema": "WaterLog",
+      "description": "User water hydration tracking records"
+    },
+    "/users/{userId}/workoutLogs/{logId}": {
+      "schema": "WorkoutLog",
+      "description": "Fitness exercise and workout activity records"
+    },
+    "/users/{userId}/weightLogs/{logId}": {
+      "schema": "WeightLog",
+      "description": "Progress tracking records for weight and measurements"
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User personal goals"
+    },
+    "/users/{userId}/workoutPlans/{planId}": {
+      "schema": "WorkoutPlan",
+      "description": "Workout routines created by or for user"
+    },
+    "/users/{userId}/mealPlans/{planId}": {
+      "schema": "MealPlan",
+      "description": "Meal plans saved for user"
+    }
+  }
+}

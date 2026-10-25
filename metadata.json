@@ -1,0 +1,6 @@
+{
+  "name": "Nutrivita – AI Health & Nutrition Tracker",
+  "description": "Ứng dụng theo dõi sức khỏe cá nhân, quản lý chế độ ăn uống, calo, nước uống, bài tập và gợi ý dinh dưỡng thông minh bằng AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
